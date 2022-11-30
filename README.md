@@ -1,2 +1,2 @@
-# alx-system_engineering-devops
-About Bash projects
+#!/bin/bash
+About_bash_projects
