@@ -1,2 +1,2 @@
 #!/bin/bash
-telnet
+mpv --no-config --vo=tct
