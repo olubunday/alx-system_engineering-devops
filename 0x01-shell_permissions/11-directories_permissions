@@ -1,2 +1,2 @@
 #!/bin/bash
-chmod setfacl -R -d -m g::rwX -p
+chmod setfacl  -d -m a::rwX
