@@ -1,2 +1,2 @@
 #!/bin/bash
-egrep ^ [[:aalpha:]] /etc/ssh/sshd_config
+egrep ^[[:aalpha:]] /etc/ssh/sshd_config
