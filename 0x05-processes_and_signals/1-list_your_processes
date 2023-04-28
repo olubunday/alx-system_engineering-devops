@@ -1,3 +1,10 @@
 #!/usr/bin/env bash
 # Lists all processes
-ps aux | less
+echo "PROCESS TREE"
+echo "============"
+echo
+
+# Get the list of processes and their details
+ps -eo pid,ppid,user,args
+
+echo
