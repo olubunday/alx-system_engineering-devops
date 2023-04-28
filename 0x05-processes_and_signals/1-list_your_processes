@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-# Lists all processes
-echo "PROCESS TREE"
-echo "============"
-echo
+# This script displays a list of currently running processes
 
-# Get the list of processes and their details
-ps -eo pid,ppid,user,args
-
-echo
+ps auxf
