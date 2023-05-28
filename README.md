@@ -1,2 +1,2 @@
 #!/bin/bash
-About bash projects
+bash_project
