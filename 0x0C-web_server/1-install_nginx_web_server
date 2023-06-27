@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# installs nginx on a server
 
 # Update package lists
 apt-get update
