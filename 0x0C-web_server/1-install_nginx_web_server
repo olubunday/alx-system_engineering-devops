@@ -1,9 +1,30 @@
-#!/usr/bin/env bash
-# install Nginx on a remote server
+#!/bin/bash
 
+# Update package lists
 apt-get update
-apt-get --yes install 'nginx'
-mkdir --parents '/var/www/html'
-echo 'Hello World!' > '/var/www/html/index.html'
-service nginx reload
+
+# Install Nginx
+apt-get install -y nginx
+
+# Configure Nginx
+cat <<EOF > /etc/nginx/sites-available/default
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    root /var/www/html;
+    index index.html;
+
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+
+    location = / {
+        echo "Hello World!";
+    }
+}
+EOF
+
+# Restart Nginx
 service nginx restart
+
