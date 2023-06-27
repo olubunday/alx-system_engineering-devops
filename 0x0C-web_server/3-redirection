@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# configure a server with Nginx and a redirect
+
+apt-get update
+apt-get --yes install 'nginx'
+cat > '/etc/nginx/sites-available/default' << EOF
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server ipv6only=on;
+	root /var/www/html;
+	index index.html;
+
+	location /redirect_me {
+		return 301 http://example.com/;
+	}
+}
+EOF
+mkdir --parents '/var/www/html'
+echo 'Hello World!' > '/var/www/html/index.html'
+service nginx reload
+service nginx restart
