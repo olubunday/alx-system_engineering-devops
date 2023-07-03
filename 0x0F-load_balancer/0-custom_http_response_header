@@ -20,4 +20,3 @@ printf %s "server {
 }" > /etc/nginx/sites-enabled/default
 
 service nginx restart
-
