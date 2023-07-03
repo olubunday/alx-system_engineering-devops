@@ -1,43 +1,30 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # configure a server with Nginx, a redirect, and a custom 404 page
 
 apt-get update
 apt-get --yes install 'haproxy'
-
-# Configure HAProxy
 cat > '/etc/haproxy/haproxy.cfg' << EOF
 global
-  log /dev/log local0
-  log /dev/log local1 notice
-  chroot /var/lib/haproxy
-  stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
-  stats timeout 30s
-  user haproxy
-  group haproxy
-  daemon
+	maxconn 2000
+	user haproxy
+	group haproxy
 
 defaults
-  log global
-  mode http
-  option httplog
-  option dontlognull
-  timeout connect 5000
-  timeout client 50000
-  timeout server 50000
+	mode http
+	retries 5
+	timeout connect 5s
+	timeout client 60s
+	timeout server 60s
 
-frontend olubunday.tech
-  bind *:80
-  default_backend web_servers
+frontend third-serenade.tech
+	bind *:80
+	default_backend web_servers
 
-backend http_back
-  balance roundrobin
-  server web-01 18.235.255.31:80 check
-  server web-02 52.206.199.245:80 check
+backend web_servers
+	balance roundrobin
+	server web-01 18.235.255.31:80
+	server web-02 52.206.199.245:80
 EOF
-
-# Configure hostname
-echo "[STUDENT_ID]-web-01" > /etc/hostname
-hostnamectl set-hostname [STUDENT_ID]-web-01
-
+update-rc.d haproxy defaults
 service haproxy reload
 service haproxy restart
