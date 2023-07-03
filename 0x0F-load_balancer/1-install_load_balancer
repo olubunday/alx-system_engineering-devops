@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# configure a server with Nginx, a redirect, and a custom 404 page
+
+apt-get update
+apt-get --yes install 'haproxy'
+cat > '/etc/haproxy/haproxy.cfg' << EOF
+global
+	maxconn 2000
+	user haproxy
+	group haproxy
+
+defaults
+	mode http
+	retries 5
+	timeout connect 5s
+	timeout client 60s
+	timeout server 60s
+
+frontend third-serenade.tech
+	bind *:80
+	default_backend web_servers
+
+backend web_servers
+	balance roundrobin
+	server web-01 [STUDENT_ID]-web-01:80 check
+  	server web-02 [STUDENT_ID]-web-02:80 check
+EOF
+update-rc.d haproxy defaults
+service haproxy reload
+service haproxy restart
