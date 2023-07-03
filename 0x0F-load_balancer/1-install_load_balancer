@@ -22,8 +22,8 @@ frontend third-serenade.tech
 
 backend web_servers
 	balance roundrobin
-	server web-01 [STUDENT_ID]-web-01:80 check
-  	server web-02 [STUDENT_ID]-web-02:80 check
+	server web-01 18.235.255.31:80 check
+  	server web-02 34.74.166.73:80 check
 EOF
 update-rc.d haproxy defaults
 service haproxy reload
