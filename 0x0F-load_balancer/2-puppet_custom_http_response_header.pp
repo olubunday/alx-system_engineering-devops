@@ -1,81 +1,35 @@
-# Install Nginx package
+# puppet manifest creating a custom HTTP header response
+exec { 'apt-get-update':
+  command => '/usr/bin/apt-get update',
+}
+
 package { 'nginx':
-  ensure => installed,
+  ensure  => installed,
+  require => Exec['apt-get-update'],
 }
 
-# Define the web-01 Nginx virtual host
-file { '/etc/nginx/sites-available/web-01':
-  content => "server {
-    listen 80 default_server;
-    listen [::]:80 default_server ipv6only=on;
-    root /var/www/html;
-    index index.html;
-
-    add_header X-Served-By web-01;
-
-    error_page 404 /404.html;
-
-    location /404.html {
-      internal;
-    }
-    location /redirect_me {
-      return 301 http://example.com/;
-    }
-  }",
+file_line { 'a':
+  ensure  => 'present',
+  path    => '/etc/nginx/sites-available/default',
+  after   => 'listen 80 default_server;',
+  line    => 'rewrite ^/redirect_me https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;',
+  require => Package['nginx'],
 }
 
-# Define the web-02 Nginx virtual host
-file { '/etc/nginx/sites-available/web-02':
-  content => "server {
-    listen 80 default_server;
-    listen [::]:80 default_server ipv6only=on;
-    root /var/www/html;
-    index index.html;
-
-    add_header X-Served-By web-02;
-
-    error_page 404 /404.html;
-
-    location /404.html {
-      internal;
-    }
-    location /redirect_me {
-      return 301 http://example.com/;
-    }
-  }",
-}
-
-# Enable web-01 and web-02 virtual hosts
-file { '/etc/nginx/sites-enabled/web-01':
-  ensure => link,
-  target => '/etc/nginx/sites-available/web-01',
-}
-
-file { '/etc/nginx/sites-enabled/web-02':
-  ensure => link,
-  target => '/etc/nginx/sites-available/web-02',
-}
-
-# Create HTML directory and files
-file { '/var/www/html':
-  ensure => directory,
-  mode   => '0755',
+file_line { 'b':
+  ensure  => 'present',
+  path    => '/etc/nginx/sites-available/default',
+  after   => 'listen 80 default_server;',
+  line    => 'add_header X-Served-By $hostname;',
+  require => Package['nginx'],
 }
 
 file { '/var/www/html/index.html':
   content => 'Hello World!',
+  require => Package['nginx'],
 }
 
-file { '/var/www/html/404.html':
-  content => 'Ceci n\'est pas une page',
-}
-
-# Reload and restart Nginx service
 service { 'nginx':
-  ensure     => running,
-  enable     => true,
-  hasrestart => true,
-  hasreload  => true,
-  subscribe  => File['/etc/nginx/sites-available/web-01', '/etc/nginx/sites-available/web-02'],
+  ensure  => running,
+  require => Package['nginx'],
 }
-
