@@ -1,27 +1,35 @@
 #!/usr/bin/python3
-"""Exports data in the JSON format"""
+"""Module to connect to an api and grab data"""
+
+import collections
+import csv
+import json
+import requests
+from sys import argv
+import sys
 
 if __name__ == "__main__":
+    employeeRequest = requests.get(
+        "https://jsonplaceholder.typicode.com/users/")
+    employeeDict = employeeRequest.json()
 
-    import json
-    import requests
-    import sys
+    todoRequest = requests.get(
+        "https://jsonplaceholder.typicode.com/todos")
+    todoList = todoRequest.json()
 
-    users = requests.get("https://jsonplaceholder.typicode.com/users")
-    users = users.json()
-    todos = requests.get('https://jsonplaceholder.typicode.com/todos')
-    todos = todos.json()
-    todoAll = {}
+    taskData = []
+    jsonData = collections.OrderedDict()
 
-    for user in users:
-        taskList = []
-        for task in todos:
-            if task.get('userId') == user.get('id'):
-                taskDict = {"username": user.get('username'),
-                            "task": task.get('title'),
-                            "completed": task.get('completed')}
-                taskList.append(taskDict)
-        todoAll[user.get('id')] = taskList
+    for person in employeeDict:
+        for thing in todoList:
+            if person.get("id") == thing.get("userId"):
+                taskDict = {
+                    "username": person.get("username"),
+                    "task": thing.get("title"),
+                    "completed": thing.get("completed"), }
+                taskData.append(taskDict)
+        jsonData["{}".format(person.get("id"))] = taskData
+        taskData = []
 
-    with open('todo_all_employees.json', mode='w') as f:
-        json.dump(todoAll, f)
+    with open("todo_all_employees.json", "w") as people:
+        json.dump(jsonData, people)
