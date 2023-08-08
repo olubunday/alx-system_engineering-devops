@@ -1,52 +1,46 @@
 #!/usr/bin/python3
-"""
-module for function to parses the title of all hot articles, and prints
-a sorted count of given keywords (case-insensitive, delimited by spaces
-"""
+"""Get frequency of keywords in posts in a Subreddit"""
 
 
-def count_words(subreddit, word_list, instances={}, count=0, after=None):
-    """
-    Args:
-        subreddit: subreddit name
-        word_list: a list containing the keywords of all hot articles titles
-        instances: a dictionary containing the keywords and their frequency
-        count: counter to change prototype
-        after: to validate subreddit
+import collections
+import io
+import json
+import requests
+import urllib.parse
 
-    Returns:
-        returns a dictionary containing the frequency of certain
-        keywords in the hot articles
-    """
-    import requests
 
-    headers = {'User-Agent': 'User-Agent'}
-    parameters = {'after': after,
-                  'count': count}
-    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    response = requests.get(url, headers=headers, params=parameters,
-                            allow_redirects=False)
-    if response.status_code == 200:
-        results = response.json().get("data")
-        after = results.get("after")
-        count += results.get("dist")
-        for child in results.get("children"):
-            hot_list = child.get("data").get("title").lower().split()
-            for word in word_list:
-                if word.lower() in hot_list:
-                    times = len([article for article in hot_list if
-                                article == word.lower()])
-                    if instances.get(word.lower()) is None:
-                        instances[word.lower()] = times
-                    else:
-                        instances[word.lower()] += times
+def count_words(subreddit, word_list, hot_list=[], after=None):
+    """Get frequency of keywords in posts in a Subreddit"""
 
-        if after is None:
-            if len(instances) == 0:
-                return
-            instances = sorted(instances.items(),
-                               key=lambda kv: (-kv[1], kv[0]))
-            [print("{}: {}".format(k, v)) for k, v in instances]
-        else:
-            count_words(subreddit, word_list, instances, count, after)
-    return
+    path = 'https://www.reddit.com'
+    path += '/r/' + urllib.parse.quote(subreddit, safe='') + '/hot.json'
+    path += '?raw_json=1'
+    if after is not None:
+        path += '&after=' + urllib.parse.quote_plus(after)
+        path += '&count=' + str(len(hot_list))
+    headers = {
+        'Connection': 'keep-alive',
+        'User-Agent': 'python:hbtn701t3:1 (by /u/SamHermesBoots)'
+    }
+    response = requests.get(path, headers=headers, allow_redirects=False)
+    if response.status_code != 200:
+        return
+    posts = response.json()
+    hot_list.extend(p['data']['title'] for p in posts['data']['children'])
+    after = posts['data']['after']
+    if after is None:
+        word_list = collections.Counter(word_list)
+        counter = collections.Counter(
+            word
+            for title in hot_list for word in title.lower().split()
+        )
+        print('\n'.join(
+            '{}: {}'.format(word, count)
+            for word, count in sorted((
+                (word, counter[word.lower()] * words)
+                for word, words in word_list.items()
+                if counter[word.lower()] > 0
+            ), key=lambda pair: (-pair[1], pair[0]))
+        ))
+        return
+    return count_words(subreddit, word_list, hot_list, after)
