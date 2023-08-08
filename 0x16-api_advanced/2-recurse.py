@@ -1,28 +1,38 @@
 #!/usr/bin/python3
-"""recursively query reddit api"""
-import requests
+"""Get all hot posts on a Subreddit"""
 
 
-def recurse(subreddit, hot_list=[], after="", count=0):
-    """recursively return a list of hot post titles for a subreddit"""
-    path = "https://www.reddit.com/r/{}/hot.json?after={}&count={}".format(
-        subreddit,
-        after,
-        count)
-    headers = {'User-agent': 'Mozilla/5.0'}
-    response = requests.get(path, allow_redirects=False, headers=headers)
-    if response.status_code in (302, 404):
+import http.client
+import io
+import json
+import urllib.parse
+
+
+def recurse(subreddit, hot_list=[], after=None, client=None):
+    """Get all hot posts on a Subreddit"""
+
+    path = '/r/' + urllib.parse.quote(subreddit, safe='') + '/hot.json'
+    path += '?raw_json=1'
+    if after is not None:
+        path += '&after=' + urllib.parse.quote_plus(after)
+        path += '&count=' + str(len(hot_list))
+    if client is None:
+        client = http.client.HTTPSConnection('www.reddit.com')
+        client.connect()
+    client.putrequest('GET', path)
+    client.putheader('Connection', 'keep-alive')
+    client.putheader('User-Agent', 'python:hbtn701t2:1 (by /u/SamHermesBoots)')
+    client.endheaders()
+    response = client.getresponse()
+    if response.status != 200:
+        client.close()
         return None
-
-    json = response.json()
-    after = json.get('data').get('after')
-    count += json.get('data').get('dist')
-
-    if count == 0:
-        return None
-    for post in json.get('data').get('children'):
-        hot_list.append(post.get('data').get('title'))
-    if after is None:
+    posts = json.load(io.TextIOWrapper(response, encoding='UTF-8'))
+    if response.getheader('Connection', 'close') == 'close':
+        client.close()
+        client = None
+    hot_list.extend(p['data']['title'] for p in posts['data']['children'])
+    if posts['data']['after'] is None:
+        client.close()
         return hot_list
-
-    return recurse(subreddit, hot_list=hot_list, count=count, after=after)
+    return recurse(subreddit, hot_list, posts['data']['after'], client)
